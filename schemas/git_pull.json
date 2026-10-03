@@ -1,0 +1,126 @@
+{
+  "format_version": "1.8",
+  "name": "git_pull",
+  "version": "0.3.0",
+  "description": "Pull with fast-forward only; refuse divergent history.",
+  "requirements": {
+    "tool": "pip",
+    "format": "requirements.txt",
+    "content": "twylt==1.0.0\npydantic>=2,<3\n"
+  },
+  "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "timeout": {
+        "default": 120,
+        "description": "Maximum Git runtime in seconds.",
+        "maximum": 3600,
+        "minimum": 1,
+        "title": "Timeout",
+        "type": "integer"
+      },
+      "repo": {
+        "description": "Virtual path to a working-copy root inside TWYLT_WORKSPACE_ROOT.",
+        "minLength": 1,
+        "title": "Repo",
+        "type": "string"
+      },
+      "remote": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Remote; omit with branch to use configured upstream.",
+        "title": "Remote"
+      },
+      "branch": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Remote branch; requires remote.",
+        "title": "Branch"
+      }
+    },
+    "required": [
+      "repo"
+    ],
+    "title": "InputTWYLTStrict",
+    "type": "object",
+    "$id": "git_pull.input",
+    "x-schema-version": "2.0.0"
+  },
+  "outputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "ok": {
+        "description": "Whether the operation succeeded; always inspect this field.",
+        "title": "Ok",
+        "type": "boolean"
+      },
+      "returncode": {
+        "description": "Git exit status; 124 for timeout.",
+        "title": "Returncode",
+        "type": "integer"
+      },
+      "stdout": {
+        "default": "",
+        "description": "Git standard output, or diff text.",
+        "title": "Stdout",
+        "type": "string"
+      },
+      "stderr": {
+        "default": "",
+        "description": "Git diagnostics.",
+        "title": "Stderr",
+        "type": "string"
+      },
+      "timed_out": {
+        "default": false,
+        "title": "Timed Out",
+        "type": "boolean"
+      },
+      "paths": {
+        "description": "Files written by put.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Paths",
+        "type": "array"
+      }
+    },
+    "required": [
+      "ok",
+      "returncode"
+    ],
+    "title": "ResultTWYLTStrict",
+    "type": "object",
+    "$id": "git.result",
+    "x-schema-version": "1.0.0"
+  },
+  "few_shots": [
+    {
+      "input": {
+        "repo": "/work/project"
+      },
+      "output": {
+        "ok": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "timed_out": false,
+        "paths": []
+      }
+    }
+  ]
+}

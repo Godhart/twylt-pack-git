@@ -1,0 +1,149 @@
+{
+  "format_version": "1.8",
+  "name": "git_diff",
+  "version": "0.3.0",
+  "description": "Show unstaged, staged or revision differences; untracked files are not included.",
+  "requirements": {
+    "tool": "pip",
+    "format": "requirements.txt",
+    "content": "twylt==1.0.0\npydantic>=2,<3\n"
+  },
+  "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "timeout": {
+        "default": 120,
+        "description": "Maximum Git runtime in seconds.",
+        "maximum": 3600,
+        "minimum": 1,
+        "title": "Timeout",
+        "type": "integer"
+      },
+      "repo": {
+        "description": "Virtual path to a working-copy root inside TWYLT_WORKSPACE_ROOT.",
+        "minLength": 1,
+        "title": "Repo",
+        "type": "string"
+      },
+      "staged": {
+        "default": false,
+        "description": "Compare index instead of working files.",
+        "title": "Staged",
+        "type": "boolean"
+      },
+      "base": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional base revision, e.g. HEAD.",
+        "title": "Base"
+      },
+      "target": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional target revision; requires base, excludes staged.",
+        "title": "Target"
+      },
+      "paths": {
+        "description": "Optional literal relative path filter.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Paths",
+        "type": "array"
+      },
+      "context": {
+        "default": 3,
+        "description": "Lines of patch context.",
+        "maximum": 100,
+        "minimum": 0,
+        "title": "Context",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "repo"
+    ],
+    "title": "InputTWYLTStrict",
+    "type": "object",
+    "$id": "git_diff.input",
+    "x-schema-version": "2.0.0"
+  },
+  "outputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "ok": {
+        "description": "Whether the operation succeeded; always inspect this field.",
+        "title": "Ok",
+        "type": "boolean"
+      },
+      "returncode": {
+        "description": "Git exit status; 124 for timeout.",
+        "title": "Returncode",
+        "type": "integer"
+      },
+      "stdout": {
+        "default": "",
+        "description": "Git standard output, or diff text.",
+        "title": "Stdout",
+        "type": "string"
+      },
+      "stderr": {
+        "default": "",
+        "description": "Git diagnostics.",
+        "title": "Stderr",
+        "type": "string"
+      },
+      "timed_out": {
+        "default": false,
+        "title": "Timed Out",
+        "type": "boolean"
+      },
+      "paths": {
+        "description": "Files written by put.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Paths",
+        "type": "array"
+      }
+    },
+    "required": [
+      "ok",
+      "returncode"
+    ],
+    "title": "ResultTWYLTStrict",
+    "type": "object",
+    "$id": "git.result",
+    "x-schema-version": "1.0.0"
+  },
+  "few_shots": [
+    {
+      "input": {
+        "repo": "/work/project",
+        "staged": true
+      },
+      "output": {
+        "ok": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "timed_out": false,
+        "paths": []
+      }
+    }
+  ]
+}

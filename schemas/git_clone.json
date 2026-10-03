@@ -1,0 +1,135 @@
+{
+  "format_version": "1.8",
+  "name": "git_clone",
+  "version": "0.3.0",
+  "description": "Clone a Git repository into a new working copy.",
+  "requirements": {
+    "tool": "pip",
+    "format": "requirements.txt",
+    "content": "twylt==1.0.0\npydantic>=2,<3\n"
+  },
+  "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "timeout": {
+        "default": 120,
+        "description": "Maximum Git runtime in seconds.",
+        "maximum": 3600,
+        "minimum": 1,
+        "title": "Timeout",
+        "type": "integer"
+      },
+      "url": {
+        "description": "HTTPS/SSH URL or virtual local repository path inside workspace.",
+        "minLength": 1,
+        "title": "Url",
+        "type": "string"
+      },
+      "destination": {
+        "description": "Virtual destination path inside configured workspace.",
+        "minLength": 1,
+        "title": "Destination",
+        "type": "string"
+      },
+      "branch": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional branch to check out.",
+        "title": "Branch"
+      },
+      "depth": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional shallow clone depth.",
+        "title": "Depth"
+      }
+    },
+    "required": [
+      "url",
+      "destination"
+    ],
+    "title": "InputTWYLTStrict",
+    "type": "object",
+    "$id": "git_clone.input",
+    "x-schema-version": "2.0.0"
+  },
+  "outputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "ok": {
+        "description": "Whether the operation succeeded; always inspect this field.",
+        "title": "Ok",
+        "type": "boolean"
+      },
+      "returncode": {
+        "description": "Git exit status; 124 for timeout.",
+        "title": "Returncode",
+        "type": "integer"
+      },
+      "stdout": {
+        "default": "",
+        "description": "Git standard output, or diff text.",
+        "title": "Stdout",
+        "type": "string"
+      },
+      "stderr": {
+        "default": "",
+        "description": "Git diagnostics.",
+        "title": "Stderr",
+        "type": "string"
+      },
+      "timed_out": {
+        "default": false,
+        "title": "Timed Out",
+        "type": "boolean"
+      },
+      "paths": {
+        "description": "Files written by put.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Paths",
+        "type": "array"
+      }
+    },
+    "required": [
+      "ok",
+      "returncode"
+    ],
+    "title": "ResultTWYLTStrict",
+    "type": "object",
+    "$id": "git.result",
+    "x-schema-version": "1.0.0"
+  },
+  "few_shots": [
+    {
+      "input": {
+        "url": "https://example.com/team/project.git",
+        "destination": "/work/project"
+      },
+      "output": {
+        "ok": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "timed_out": false,
+        "paths": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "format_version": "1.8",
+  "name": "git_put",
+  "version": "0.3.0",
+  "description": "Write one UTF-8 text file in a working copy; does not stage it.",
+  "requirements": {
+    "tool": "pip",
+    "format": "requirements.txt",
+    "content": "twylt==1.0.0\npydantic>=2,<3\n"
+  },
+  "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "timeout": {
+        "default": 120,
+        "description": "Maximum Git runtime in seconds.",
+        "maximum": 3600,
+        "minimum": 1,
+        "title": "Timeout",
+        "type": "integer"
+      },
+      "repo": {
+        "description": "Virtual path to a working-copy root inside TWYLT_WORKSPACE_ROOT.",
+        "minLength": 1,
+        "title": "Repo",
+        "type": "string"
+      },
+      "path": {
+        "description": "Relative file path within repo.",
+        "minLength": 1,
+        "title": "Path",
+        "type": "string"
+      },
+      "content": {
+        "description": "Complete UTF-8 file content; newlines are preserved.",
+        "title": "Content",
+        "type": "string"
+      },
+      "overwrite": {
+        "default": false,
+        "description": "Explicitly allow replacement of an existing file.",
+        "title": "Overwrite",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "repo",
+      "path",
+      "content"
+    ],
+    "title": "InputTWYLTStrict",
+    "type": "object",
+    "$id": "git_put.input",
+    "x-schema-version": "2.0.0"
+  },
+  "outputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "ok": {
+        "description": "Whether the operation succeeded; always inspect this field.",
+        "title": "Ok",
+        "type": "boolean"
+      },
+      "returncode": {
+        "description": "Git exit status; 124 for timeout.",
+        "title": "Returncode",
+        "type": "integer"
+      },
+      "stdout": {
+        "default": "",
+        "description": "Git standard output, or diff text.",
+        "title": "Stdout",
+        "type": "string"
+      },
+      "stderr": {
+        "default": "",
+        "description": "Git diagnostics.",
+        "title": "Stderr",
+        "type": "string"
+      },
+      "timed_out": {
+        "default": false,
+        "title": "Timed Out",
+        "type": "boolean"
+      },
+      "paths": {
+        "description": "Files written by put.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Paths",
+        "type": "array"
+      }
+    },
+    "required": [
+      "ok",
+      "returncode"
+    ],
+    "title": "ResultTWYLTStrict",
+    "type": "object",
+    "$id": "git.result",
+    "x-schema-version": "1.0.0"
+  },
+  "few_shots": [
+    {
+      "input": {
+        "repo": "/work/project",
+        "path": "hello.py",
+        "content": "print(\"hello\")\n"
+      },
+      "output": {
+        "ok": true,
+        "returncode": 0,
+        "stdout": "",
+        "stderr": "",
+        "timed_out": false,
+        "paths": [
+          "hello.py"
+        ]
+      }
+    }
+  ]
+}
