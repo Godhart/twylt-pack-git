@@ -72,13 +72,13 @@ def test_describe(op):
     assert r['name'] == 'git_'+op
     assert r['inputSchema']['additionalProperties'] is False
     assert r['outputSchema'] and r['few_shots']
-    assert 'twylt==1.0.0' in r['requirements']['content']
+    assert 'twylt>=1.1.1,<2' in r['requirements']['content']
 
 @pytest.mark.parametrize('path',['../outside','.git/config','/tmp/outside','sub/../../out','.GIT/config'])
 def test_put_rejects_path(repos,path):
     _,a,_=repos
     p = subprocess.run([sys.executable,str(BASE/'tools/git_put/run.py'),json.dumps(virtual_input({'repo':str(a),'path':path,'content':'bad'}))],capture_output=True,text=True)
-    assert p.returncode == 5
+    assert p.returncode == 6
 
 def test_overwrite_symlink_literal_and_validation(repos,tmp_path):
     _,a,_=repos
@@ -91,7 +91,7 @@ def test_overwrite_symlink_literal_and_validation(repos,tmp_path):
     outside=tmp_path/'outside'; outside.write_text('original')
     (a/'link').symlink_to(outside)
     p=subprocess.run([sys.executable,str(BASE/'tools/git_put/run.py'),json.dumps(virtual_input(dict(repo,path='link',content='oops',overwrite=True)))],capture_output=True,text=True)
-    assert p.returncode == 5 and outside.read_text() == 'original'
+    assert p.returncode == 6 and outside.read_text() == 'original'
     (a/'link').unlink()  # Strict policy rejects any repository containing symlinks.
     invoke('put',dict(repo,path='[a].txt',content='literal'))
     assert invoke('add',dict(repo,paths=['[a].txt']))['ok']
@@ -121,7 +121,7 @@ def test_timeout(monkeypatch):
     spec=importlib.util.spec_from_file_location('git_diff_tool',BASE/'tools/git_diff/tool.py')
     module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     def fail(*a,**kw): raise subprocess.TimeoutExpired('git',1)
-    monkeypatch.setattr(module.subprocess,'run',fail)
+    monkeypatch.setattr(module.git.__globals__['subprocess'],'run',fail)
     result=module.git(['diff'],timeout=1)
     assert result.timed_out and not result.ok and result.returncode == 124
 
@@ -183,4 +183,4 @@ def test_new_tools_reject_invalid_arguments(repos, op, extra):
     _, a, _ = repos
     data = {'repo': str(a), **extra}
     p = subprocess.run([sys.executable, str(BASE/'tools'/('git_'+op)/'run.py'), json.dumps(virtual_input(data))], capture_output=True, text=True)
-    assert p.returncode in {2, 5}
+    assert p.returncode in {2, 5, 6}

@@ -1,12 +1,12 @@
 {
   "format_version": "1.8",
   "name": "git_commit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Commit the current index with a message; does not implicitly add files.",
   "requirements": {
     "tool": "pip",
     "format": "requirements.txt",
-    "content": "twylt==1.0.0\npydantic>=2,<3\n"
+    "content": "twylt>=1.1.1,<2\npydantic>=2,<3\n"
   },
   "inputSchema": {
     "additionalProperties": false,

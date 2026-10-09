@@ -1,0 +1,57 @@
+{
+  "name": "twylt-pack-git",
+  "version": "0.4.0",
+  "protocol": "TWYLT 1",
+  "tools": [
+    {
+      "name": "git_add",
+      "entrypoint": "tools/git_add/tool.py",
+      "bootstrap": "tools/git_add/run.py"
+    },
+    {
+      "name": "git_clone",
+      "entrypoint": "tools/git_clone/tool.py",
+      "bootstrap": "tools/git_clone/run.py"
+    },
+    {
+      "name": "git_commit",
+      "entrypoint": "tools/git_commit/tool.py",
+      "bootstrap": "tools/git_commit/run.py"
+    },
+    {
+      "name": "git_diff",
+      "entrypoint": "tools/git_diff/tool.py",
+      "bootstrap": "tools/git_diff/run.py"
+    },
+    {
+      "name": "git_fetch",
+      "entrypoint": "tools/git_fetch/tool.py",
+      "bootstrap": "tools/git_fetch/run.py"
+    },
+    {
+      "name": "git_log",
+      "entrypoint": "tools/git_log/tool.py",
+      "bootstrap": "tools/git_log/run.py"
+    },
+    {
+      "name": "git_pull",
+      "entrypoint": "tools/git_pull/tool.py",
+      "bootstrap": "tools/git_pull/run.py"
+    },
+    {
+      "name": "git_push",
+      "entrypoint": "tools/git_push/tool.py",
+      "bootstrap": "tools/git_push/run.py"
+    },
+    {
+      "name": "git_put",
+      "entrypoint": "tools/git_put/tool.py",
+      "bootstrap": "tools/git_put/run.py"
+    },
+    {
+      "name": "git_status",
+      "entrypoint": "tools/git_status/tool.py",
+      "bootstrap": "tools/git_status/run.py"
+    }
+  ]
+}

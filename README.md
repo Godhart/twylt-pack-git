@@ -1,11 +1,36 @@
-# Git TWYLT Pack 0.3.0
+# Git TWYLT Pack 0.4.0
+
+## Миграция 0.4.0
+
+Пак основан на последней версии GitHub, проверенной 2026-10-08.
+TWYLT >=1.1.1 устанавливается как библиотека; сам этот пак не собирается и
+не устанавливается через pip. Установите requirements.txt и сохраняйте
+каталоги tools/ и shared/git_common/ вместе. Если новая версия TWYLT ещё не доступна
+в вашем Python-индексе, сначала установите её из исходников или wheel.
+
+Общие guardrails не копируются в инструменты: используются twylt.guardrails.
+Каждый тул добавляет shared/ в sys.path относительно __file__, без зависимости
+от cwd и без PYTHONPATH. Builder сканирует только tools/; его launcher требует
+доступности исходного дерева. Разные версии пака запускайте в отдельных процессах.
+
+Guardrails выключены по умолчанию. Для прежней политики задайте TWYLT_GUARDRAILS=1
+и TWYLT_WORKSPACE_ROOT. TWYLT_ALLOWED_CWD опционально разрешает отдельный корень
+транспорта input.json/output.json и его подкаталоги; бизнес-доступ он не расширяет.
+Отказы guardrails возвращают код 6; валидация — 2, бизнес-ошибка — 5.
+При выключенной политике и отсутствии workspace используются обычные пути хоста;
+при указанном workspace сохраняется виртуальная семантика путей.
+Механизмы TWYLT контролируют типовое использование, а произвольный Python/подпроцессы
+контролируются ОС. Не рассматривайте эти проверки как файловую изоляцию.
+
+TWYLT_DISABLE_NETWORK=1 при включённых guardrails запрещает сетевые clone/fetch/pull/push. Локальные репозитории и локальные remotes разрешены; status/log/diff не используют сеть. Проверки конфигурации, hooks и метаданных Git сохраняются.
+
 
 Десять небольших TWYLT-обёрток для агента: clone, fetch, pull, put, add,
-commit, push, diff, status, log. Реальный Git CLI, TWYLT 1.0.0, Python 3.10+.
+commit, push, diff, status, log. Реальный Git CLI, TWYLT >=1.1.1, Python 3.10+.
 
 ## Контроль рабочей области (изменение совместимости)
 
-Обязателен `TWYLT_WORKSPACE_ROOT`; `repo`, destination и локальный clone.url теперь
+При `TWYLT_GUARDRAILS=1` обязателен `TWYLT_WORKSPACE_ROOT`; `repo`, destination и локальный clone.url теперь
 виртуальные относительно него. Журнал JSONL настраивается через `TWYLT_INCIDENT_LOG`.
 Описание общей политики и ограничений Git: [WORKSPACE.md](WORKSPACE.md).
 Hooks, системная/пользовательская конфигурация и signing отключены; linked worktree,
@@ -22,6 +47,7 @@ python -m venv .venv
 # Windows cmd: .venv\Scripts\activate.bat
 python -m pip install -r requirements.txt
 # Рабочая область и каталог журналов должны уже существовать:
+export TWYLT_GUARDRAILS=1
 export TWYLT_WORKSPACE_ROOT=/srv/agent/workspace
 export TWYLT_INCIDENT_LOG=/srv/agent/logs/incidents.jsonl
 python tools/git_diff/run.py '{"describe":"json_spec"}'
@@ -37,14 +63,14 @@ python tools/git_diff/run.py '{"repo":"/work/project"}'
 ## Toolpack-builder / ToolHub
 
 Сканировать каталог `tools`, выбирать только `**/tool.py` (10 файлов),
-не включать `run.py` одновременно. Каждый `tool.py` самодостаточен и содержит
+не включать `run.py` одновременно. Каждый `tool.py` содержит
 буквальные name/version/requirements/few_shots, Pydantic-схемы и вызов `Tool.run()`.
-Нет зависимости от файлов соседних инструментов или установленного пакета проекта.
+Общие функции импортируются из shared/git_common; весь tools/shared нужно сохранять вместе. Установка самого пака не требуется.
 `run.py` рядом — стандартный launcher `twylt.bootstrap.run_tool_file` для локального
 запуска и dependency-independent discovery после установки TWYLT.
-В ToolHub можно перенести содержимое соответствующего `tool.py` и получить
-метаданные через `json_spec`. Python-зависимости указаны в requirements каждого
-инструмента; системный Git устанавливается отдельно. Проверена самостоятельная
+Для ToolHub используйте path-based launcher builder и volume всего пака;
+копирования одного tool.py недостаточно. Метаданные доступны через json_spec. Python-зависимости указаны в requirements каждого
+инструмента; системный Git устанавливается отдельно. Проверена исходная
 работа и discovery всех 10 обёрток; импорт в GUI ToolHub/toolpack-builder здесь
 не выполнялся.
 
@@ -130,16 +156,11 @@ push выполняются только при явном вызове соот
 
 ```sh
 python -m pip install -r requirements-dev.txt
-python scripts/build_tools.py
 python -m pytest -q
 ```
 
-`src/workspace.py`, `src/git_policy.py`, `src/common.py` и `scripts/build_tools.py` — исходники генерации. Полученные
-`tools/*/tool.py` включены в релиз: генерация для использования не требуется.
-Тесты работают с временными локальными репозиториями, без внешнего сервера.
-Проверяют все операции, discovery, удаление через add, literal paths, валидацию,
-symlink/traversal, защиту от перезаписи, divergence, non-fast-forward push и timeout.
-Архитектурные решения: `docs/adr/`.
+Редактируйте конкретный tools/git_*/tool.py и общий shared/git_common/common.py.
+Тулы больше не генерируются; общего реестра бизнес-операций в runtime нет.
 
 ## Status и log (0.2.0)
 
@@ -180,3 +201,14 @@ Git log, без follow для переименований). Нет коммит
 {"repo":"/work/repo","limit":10,"skip":10,"oneline":true}
 {"repo":"/work/repo","revision":"main","paths":["src/main.py"]}
 ```
+
+## Интеграция с toolhub-images
+
+После публикации обновите Git ref пака в своём domain YAML и используйте
+update: always для замены старого toolset. Сохраняйте весь tools/shared tree.
+Образы должны содержать TWYLT >=1.1.1 и внешние зависимости из requirements.txt;
+установка самого пака не требуется. Для filesystem обновите соответствующий
+source pin в sources.lock.json images, затем пересоберите образы.
+Тулы теперь используют общий транспорт и поддерживают TWYLT_ALLOWED_CWD;
+legacy override TOOLHUB_RUN_ROOT внутри workspace для этих новых паков больше не нужен.
+Не удаляйте собственные настройки data/workspace при обновлении domain.

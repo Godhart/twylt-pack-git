@@ -21,7 +21,7 @@ def setup_env(tmp_path):
 def test_every_tool_requires_root(tool,tmp_path):
     env={**os.environ};env.pop('TWYLT_WORKSPACE_ROOT',None);env.pop('TWYLT_INCIDENT_LOG',None);env.pop('INPUT_DESCRIBE',None)
     result=call(tool.name,json.loads((tool/'example.json').read_text()),env)
-    assert result.returncode==5 and not result.stdout
+    assert result.returncode==6 and not result.stdout
     event=json.loads(result.stderr.splitlines()[0])
     assert event['code']=='workspace_not_configured' and event['tool']==tool.name
     described=call(tool.name,{'describe':'json_spec'},env)
@@ -32,7 +32,7 @@ def test_every_tool_checks_log_before_business(tool,tmp_path):
     root,log,env=setup_env(tmp_path)
     env['TWYLT_INCIDENT_LOG']=str(tmp_path/'absent'/'audit.jsonl')
     result=call(tool.name,json.loads((tool/'example.json').read_text()),env)
-    assert result.returncode==5
+    assert result.returncode==6
     assert json.loads(result.stderr.splitlines()[0])['code']=='incident_log_unavailable'
     assert list(root.iterdir())==[]
 
@@ -51,7 +51,7 @@ def test_git_implicit_config_paths(tmp_path,key,value):
     repo=repository(root/'repo')
     native('-C',repo,'config',key,value)
     p=call('git_status',{'repo':'/repo'},env)
-    assert p.returncode==5
+    assert p.returncode==6
     assert json.loads(log.read_text())['code']=='git_config_forbidden'
     assert '/outside' not in log.read_text()
 
@@ -62,7 +62,7 @@ def test_local_remote_outside(tmp_path,op):
     remote=tmp_path/'outside.git';native('init','--bare',remote)
     native('-C',repo,'remote','add','origin',remote)
     p=call(op,{'repo':'/repo'},env)
-    assert p.returncode==5
+    assert p.returncode==6
     assert json.loads(log.read_text())['code']=='git_local_remote_outside_workspace'
 
 @pytest.mark.parametrize('kind', ['gitfile','alternates','symlink'])
@@ -75,7 +75,7 @@ def test_git_storage_redirection(tmp_path,kind):
         (repo/'.git/objects/info/alternates').write_text(str(tmp_path/'outside')+'\n')
     else: (repo/'link').symlink_to(tmp_path)
     p=call('git_log',{'repo':'/repo'},env)
-    assert p.returncode==5 and len(log.read_text().splitlines())==1
+    assert p.returncode==6 and len(log.read_text().splitlines())==1
 
 @pytest.mark.skipif(os.name!='posix',reason='shell hook')
 def test_hooks_disabled_and_clone_symlink_tree(tmp_path):
@@ -90,14 +90,14 @@ def test_hooks_disabled_and_clone_symlink_tree(tmp_path):
     (repo/'link').symlink_to(tmp_path);native('-C',repo,'add','link')
     hook.unlink();native('-C',repo,'commit','-m','Link');(repo/'link').unlink()
     p=call('git_clone',{'url':'/repo','destination':'/clone'},env)
-    assert p.returncode==5
+    assert p.returncode==6
     assert json.loads(log.read_text())['code']=='git_symlink_tree_forbidden'
     assert not (root/'clone/link').exists() and not (root/'clone/link').is_symlink()
 
 def test_clone_traversal_and_credentials_not_logged(tmp_path):
     root,log,env=setup_env(tmp_path)
     p=call('git_clone',{'url':'https://name:supersecret@example.invalid/repo','destination':'../escape'},env)
-    assert p.returncode==5 and 'supersecret' not in log.read_text()
+    assert p.returncode==6 and 'supersecret' not in log.read_text()
     assert json.loads(log.read_text())['requested_path']=='../escape'
 
 def test_file_transport_cannot_escape(tmp_path):
@@ -105,11 +105,11 @@ def test_file_transport_cannot_escape(tmp_path):
     tool=TOOLS[0]
     (tmp_path/'output.json').write_text('keep outside')
     p=subprocess.run([sys.executable,str(tool/'run.py')],cwd=tmp_path,stdin=subprocess.DEVNULL,env=env,text=True,capture_output=True)
-    assert p.returncode==4 and (tmp_path/'output.json').read_text()=='keep outside'
-    assert json.loads(log.read_text())['code']=='transport_cwd_outside_workspace'
+    assert p.returncode==6 and (tmp_path/'output.json').read_text()=='keep outside'
+    assert json.loads(log.read_text())['code']=='transport_cwd_or_path_outside_allowed_roots'
     log.write_text('')
     target=tmp_path/'outside';target.write_text('keep target')
     (root/'output.json').symlink_to(target)
     p=subprocess.run([sys.executable,str(tool/'run.py')],cwd=root,stdin=subprocess.DEVNULL,env=env,text=True,capture_output=True)
-    assert p.returncode==4 and target.read_text()=='keep target' and (root/'output.json').is_symlink()
+    assert p.returncode==6 and target.read_text()=='keep target' and (root/'output.json').is_symlink()
     assert json.loads(log.read_text())['code']=='symlink_forbidden'
